@@ -1,0 +1,37 @@
+volumes:
+  db-local:
+    driver: local
+
+services:
+
+  postgres:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: ${POSTGRES_DB:-laravel}
+    volumes:
+      - db-local:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - postgres
+
+  php:
+    build:
+      context: dockerfiles
+      dockerfile: php.Dockerfile
+    volumes:
+      - ../src:/var/www/laravel
+
+  nginx:
+    image: "nginx:stable-alpine"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../src:/var/www/laravel
+    ports:
+      - ${WEB_PORT:-80}:80
